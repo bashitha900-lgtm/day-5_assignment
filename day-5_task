@@ -1,0 +1,168 @@
+
+inventory = {}
+categories = set()
+LOW_STOCK_THRESHOLD = 5 
+
+def add_product(prod_id, name, category, qty, price, supplier):
+    """Add new product with ID, name, category, qty, price, supplier"""
+    if prod_id in inventory:
+        print(f"Error: Product ID {prod_id} already exists.")
+        return
+
+    details = (name, category, qty, price, supplier)
+
+   
+    inventory[prod_id] = {
+        "name": name,
+        "category": category,
+        "qty": int(qty),
+        "price": float(price),
+        "supplier": supplier,
+    }
+
+    
+    categories.add(category)
+    print(f"Product '{name}' added successfully.")
+
+
+def update_inventory(prod_id, qty=None, price=None):
+    """Modify quantity or price of existing product by ID"""
+    if prod_id in inventory:
+        if qty is not None:
+            inventory[prod_id]["qty"] = int(qty)
+        if price is not None:
+            inventory[prod_id]["price"] = float(price)
+        print(f"Product ID {prod_id} updated successfully.")
+    else:
+        print("Product not found.")
+
+
+def search_product(query):
+    """Find by product ID or name (case-insensitive) - Returns a List"""
+    results = []  
+    query = str(query).lower()
+
+    for prod_id, info in inventory.items():
+        if str(prod_id).lower() == query or query in info["name"].lower():
+
+            results.append((prod_id, info["name"], info["qty"], info["price"]))
+
+    return results
+
+
+def display_inventory():
+    """Show all products in a formatted table view"""
+    if not inventory:
+        print("Inventory is empty.")
+        return
+
+    print(
+        f"\n{'ID':<10} | {'Name':<20} | {'Category':<15} | {'Qty':<8} | {'Price':<10} | {'Supplier':<15}"
+    )
+    print("-" * 85)
+    for prod_id, info in inventory.items():
+        print(
+            f"{prod_id:<10} | {info['name']:<20} | {info['category']:<15} | {info['qty']:<8} | ${info['price']:<9.2f} | {info['supplier']:<15}"
+        )
+
+
+def low_stock_alert():
+    """Warn when quantity falls below threshold"""
+    print(f"\n Low Stock Alerts (Qty < {LOW_STOCK_THRESHOLD}) ")
+    found = False
+    for prod_id, info in inventory.items():
+        if info["qty"] < LOW_STOCK_THRESHOLD:
+            print(
+                f"ALERT: '{info['name']}' (ID: {prod_id}) is low on stock! Current Qty: {info['qty']}"
+            )
+            found = True
+    if not found:
+        print("All items are sufficiently stocked.")
+
+
+def out_of_stock_alert():
+    """Highlight products with quantity = 0"""
+    print("\n Out of Stock Alerts ")
+    found = False
+    for prod_id, info in inventory.items():
+        if info["qty"] == 0:
+            print(f"CRITICAL: '{info['name']}' (ID: {prod_id}) is OUT OF STOCK!")
+            found = True
+    if not found:
+        print("No out of stock items.")
+
+
+def category_management():
+    """Track product categories using Sets"""
+    print("\n Tracked Categories ")
+    if not categories:
+        print("No categories recorded yet.")
+    else:
+        for cat in categories:
+            print(f"- {cat}")
+
+
+def inventory_report():
+    """Total items, total value, category-wise summary - Returns a List summary"""
+    total_items = len(inventory)
+    total_value = sum(info["qty"] * info["price"] for info in inventory.values())
+
+    category_summary = {}
+    for info in inventory.values():
+        cat = info["category"]
+        category_summary[cat] = category_summary.get(cat, 0) + info["qty"]
+
+    print("\nINVENTORY REPORT ")
+    print(f"Total Unique Items: {total_items}")
+    print(f"Total Inventory Value: ${total_value:.2f}")
+    print("\nCategory-wise Summary (Total Quantities):")
+    for cat, total_qty in category_summary.items():
+        print(f" - {cat}: {total_qty} units")
+    print("---------------------------------------------")
+
+    return [total_items, total_value, category_summary]
+
+
+def delete_product(prod_id):
+    """Remove product from inventory by ID"""
+    if prod_id in inventory:
+        removed = inventory.pop(prod_id)
+        print(f"Product '{removed['name']}' removed successfully.")
+    else:
+        print("Product ID not found.")
+
+
+if __name__ == "__main__":
+    print("--- Testing Smart Inventory Management System ---\n")
+
+    add_product("P101", "Laptop", "Electronics", 10, 899.99, "Dell Tech")
+    add_product("P102", "Mouse", "Electronics", 3, 25.00, "Logi Corp")
+    add_product("P103", "Desk Chair", "Furniture", 12, 150.00, "OfficeMax")
+    add_product("P104", "Notebook", "Stationery", 0, 2.50, "PaperCo")
+
+    display_inventory()
+
+    print("\nUpdating Mouse quantity to 15 and price of Laptop...")
+    update_inventory("P102", qty=15)
+    update_inventory(
+        "P101", price=849.99
+    )   
+
+   
+    print("\nSearching for 'laptop':")
+    search_results = search_product("laptop")
+    print("Search Results (List):", search_results)
+
+    
+    low_stock_alert()
+    out_of_stock_alert()
+
+    
+    category_management()
+
+    inventory_report()
+
+    print("\nDeleting Notebook from inventory...")
+    delete_product("P104")
+
+    display_inventory()
